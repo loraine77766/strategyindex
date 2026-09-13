@@ -1,0 +1,11 @@
+# Ignore todo los archivos de credenciales y entorno
+*.env*
+!.env.example
+keys/
+*.key
+*.pem
+*.p12
+.env.local
+# Datos runtime del bot (SQLite local)
+bot/*.db
+bot/bot.db

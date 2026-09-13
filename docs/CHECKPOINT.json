@@ -1,0 +1,63 @@
+{
+  "project_name": "strategyindex",
+  "last_update": "2026-09-13",
+  "current_phase": "SIMULATION (Deriv + CMC providers, SimulatedBroker)",
+  "current_task": "none",
+  "completed_tasks": [
+    "Prueba técnica Deriv (informe A-F en deriv_prueba/RESULTADOS.md)",
+    "Núcleo: candles, EMAs, 2 estrategias, trade paper, API, dashboard",
+    "Corrección a Deriv+SimulatedBroker (Binance descartado del flujo)",
+    "Sistema de memoria persistente (docs/ + context_guard + context:restore)",
+    "Abstracción multi-proveedor (factory, capabilities, stubs Kraken/OKX/Bybit, PairScanner interfaz)",
+    "CoinMarketCapProvider con API key real (polling + quotes/historical keyed)",
+    "CMC AssetCatalog (sync 100 assets, resolve by symbol/name/slug/id)",
+    "StrategyIndex Fases 1-10 (bots independientes IRK, CFD, stats, API pública/admin, dashboards)",
+    "Auditoría viva: 18/18 sondas, 5 bugs corregidos, 67/67→70/70 tests",
+    "CMC keyed history: _history_keyed() quotes/historical (5m/15m/30m/1h/4h)",
+    "Seed on-demand: seed_bot() auto-seeda al crear bot por API",
+    "Server en localhost:8104 funcionando con CMC provider + 1 bot BTC 5m"
+  ],
+  "pending_tasks": [
+    "Obtener token clásico DEMO Deriv y validar authorize + streaming",
+    "Render deploy",
+    "Admin rate-limit",
+    "trading.py legacy cleanup"
+  ],
+  "blocked_tasks": [
+    "Streaming autenticado Deriv (bloqueado por token clásico + App ID)",
+    "DerivBroker operativo (bloqueado por validación auth DEMO)",
+    "CMC OHLCV Historical: plan Basic no soporta endpoint (403)"
+  ],
+  "important_decisions": [
+    "Deriv + CMC dual provider; Binance descartado",
+    "Solo velas cerradas deciden; cruce prev->curr con epsilon",
+    "Estado independiente por symbol|strategy|timeframe",
+    "Reconexión nunca genera señales",
+    "Secretos solo en variables de entorno",
+    "CMC key stored in .env as CMC_API_KEY (git-ignored)"
+  ],
+  "active_files": [
+    "bot/cmc_client.py",
+    "bot/cmc_catalog.py",
+    "bot/providers_coinmarketcap.py",
+    "bot/providers.py",
+    "bot/market_data.py",
+    "bot/main.py",
+    "bot/api.py",
+    "bot/database.py",
+    "bot/bots.py",
+    "bot/config.py",
+    "bot/frontend/index.html",
+    "bot/tests/test_bot.py"
+  ],
+  "tests_status": "70/70 OK (2026-09-13; 3 tests CMC keyed nuevos)",
+  "known_errors": [
+    "Deriv sin auth: active_symbols vacío y subscripciones rechazadas",
+    "PAT pat_... -> InvalidToken en WS clásico",
+    "app_id 1089 de pruebas, no definitivo",
+    "CMC keyless sin OHLC (solo pools DEX K-line)",
+    "CMC Basic plan no soporta OHLCV Historical endpoint (403)"
+  ],
+  "next_action": "Elegir siguiente tarea: auth Deriv, deploy, o nueva funcionalidad",
+  "context_version": 2
+}

@@ -1,0 +1,38 @@
+services:
+  - type: web
+    name: strategyindex
+    runtime: python
+    buildCommand: pip install -r bot/requirements.txt
+    startCommand: python -m bot.run
+    healthCheckPath: /health
+    envVars:
+      - key: BOT_PROVIDER
+        value: coinmarketcap
+      - key: BOT_SYMBOLS
+        value: BTC
+      - key: BOT_BROKER
+        value: simulated
+      - key: BOT_COMMISSION
+        value: "0.0005"
+      - key: BOT_SPREAD
+        value: "0.0001"
+      - key: BOT_QTY
+        value: "0.01"
+      - key: BOT_BALANCE
+        value: "50"
+      - key: BOT_POLL_SECONDS
+        value: "5"
+      - key: CMC_POLL_SECONDS
+        value: "30"
+      - key: CMC_IDS
+        value: "BTC:1,ETH:1027,PAXG:4705,SOL:5426"
+      - key: CMC_CATALOG_LIMIT
+        value: "200"
+      - key: ADMIN_RATE_LIMIT
+        value: "120"
+      - key: ADMIN_RATE_WINDOW
+        value: "60"
+      - key: BOT_LOG
+        value: INFO
+      # Secrets (configurar en Render Dashboard):
+      # CMC_API_KEY, ADMIN_TOKEN, DATABASE_URL, DERIV_TOKEN (opcional)
