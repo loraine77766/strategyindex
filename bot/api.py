@@ -95,8 +95,9 @@ def _public_trade(t):
             "duration": t.get("duration")}
 
 
-def create_app(orch):
-    app = FastAPI(title="StrategyIndex")
+def create_app(orch, app=None):
+    if app is None:
+        app = FastAPI(title="StrategyIndex")
 
     origins = [o.strip() for o in os.environ.get("CORS_ORIGINS", "*").split(",") if o.strip()]
     app.add_middleware(CORSMiddleware, allow_origins=origins,

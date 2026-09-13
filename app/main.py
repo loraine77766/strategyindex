@@ -1,8 +1,4 @@
-"""StrategyIndex — RunYour.App FastAPI entrypoint.
-
-Estructura: app/main.py (detectable por RunYour.App analyzer).
-Reutiliza 100% la lógica de bot/.
-"""
+"""StrategyIndex — RunYour.App FastAPI entrypoint."""
 import asyncio
 import os
 
@@ -15,10 +11,11 @@ from bot.main import Orchestrator
 
 log = get_logger("runyourapp")
 
+app = FastAPI()
+
 _settings = Settings()
 _orch = Orchestrator(_settings)
-
-app = _create_api(_orch)
+_create_api(_orch, app=app)
 
 _provider_task = None
 

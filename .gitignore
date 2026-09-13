@@ -9,3 +9,5 @@ keys/
 # Datos runtime del bot (SQLite local)
 bot/*.db
 bot/bot.db
+__pycache__/
+*.pyc
