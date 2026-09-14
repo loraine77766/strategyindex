@@ -277,10 +277,10 @@ function admDelete(id){if(!confirm("Borrar este bot?"))return;apiPost("/api/admi
 var _selectedAsset=null;
 function searchAssets(){
   var q=$("fAssetSearch").value.trim();
-  if(q.length<2){$("fAssetResults").innerHTML="";return;}
+  if(q.length<2){$("fAssetResults").innerHTML='<div class="k">Escribe al menos 2 letras</div>';return;}
   $("fAssetResults").innerHTML='<div class="k">Buscando...</div>';
   apiGet("/api/admin/market/assets?q="+encodeURIComponent(q)+"&limit=8").then(function(r){
-    if(!r.length){$("fAssetResults").innerHTML='<div class="k">Sin resultados para "'+q+'"</div>';return;}
+    if(!r||!r.length){$("fAssetResults").innerHTML='<div class="k">Sin resultados para "'+q+'". Intenta: BTC, ETH, SOL</div>';return;}
     var html='';
     for(var i=0;i<r.length;i++){
       var a=r[i];
@@ -300,16 +300,34 @@ function searchAssets(){
         $("createBotBtn").disabled=false;
       });
     }
-  }).catch(function(){$("fAssetResults").innerHTML='<div class="k">Error de conexion</div>';});
+  }).catch(function(e){
+    $("fAssetResults").innerHTML='<div class="k" style="color:var(--dn)">Error de conexion. Intenta de nuevo.</div>';
+  });
 }
 
 async function createBot(){
-  if(!_selectedAsset){$("admMsg").textContent="Selecciona un activo primero.";$("admMsg").className="dn";return;}
-  var f={strategy_key:$("fStrategy").value,symbol:_selectedAsset,provider:"coinmarketcap",timeframe:$("fTimeframe").value,capital:parseFloat($("frmBot").capital.value)||50,lot:parseFloat($("frmBot").lot.value)||0.01,max_positions:parseInt($("frmBot").max_positions.value)||1};
+  if(!_selectedAsset){$("admMsg").textContent="Selecciona un activo de la lista primero.";$("admMsg").className="dn";return;}
+  var f={strategy_key:$("fStrategy").value,symbol:_selectedAsset,provider:"coinmarketcap",timeframe:$("fTimeframe").value,capital:parseFloat(document.querySelector('[name=capital]').value)||50,lot:parseFloat(document.querySelector('[name=lot]').value)||0.01,max_positions:parseInt(document.querySelector('[name=max_positions]').value)||1};
   $("createBotBtn").disabled=true;
-  $("admMsg").textContent="Creando...";$("admMsg").className="k";
-  try{await apiPost("/api/admin/bots",f);$("admMsg").textContent="Bot creado.";$("admMsg").className="up";admLoad();_selectedAsset=null;$("fSymbol").value="";$("fAssetSearch").value="";$("createBotBtn").disabled=true;}
-  catch(e){$("admMsg").textContent="Error: "+(e.message||"revisa campos");$("admMsg").className="dn";$("createBotBtn").disabled=false;}
+  $("admMsg").textContent="Creando bot...";$("admMsg").className="k";
+  try{
+    var r=await apiPost("/api/admin/bots",f);
+    $("admMsg").textContent="Bot creado: "+r.bot_id+" ("+r.symbol+"/"+r.timeframe+")";
+    $("admMsg").className="up";
+    admLoad();
+    _selectedAsset=null;
+    $("fSymbol").value="";
+    $("fAssetSearch").value="";
+    $("fAssetResults").innerHTML="";
+    $("createBotBtn").disabled=true;
+  }catch(e){
+    var msg="Error desconocido";
+    if(typeof e==="number")msg="Error HTTP "+e;
+    else if(e&&e.message)msg=e.message;
+    else if(e&&e.detail)msg=e.detail;
+    $("admMsg").textContent=msg;$("admMsg").className="dn";
+    $("createBotBtn").disabled=false;
+  }
 }
 
 function init(){

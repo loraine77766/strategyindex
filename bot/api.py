@@ -303,7 +303,11 @@ def create_app(orch, app=None):
 
         @app.get("/")
         def index():
-            return FileResponse(str(FRONT / "index.html"))
+            import time as _t
+            return FileResponse(str(FRONT / "index.html"),
+                                headers={"Cache-Control": "no-cache, no-store, must-revalidate",
+                                         "Pragma": "no-cache",
+                                         "X-Version": str(int(_t.time()))})
 
     return app
 
