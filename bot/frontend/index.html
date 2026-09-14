@@ -109,10 +109,18 @@ StrategyIndex</div>
 <h3 style="margin:0 0 12px">Crear Bot</h3>
 <div class="field"><label>Estrategia</label>
 <select name="strategy_key" id="fStrategy"><option value="irk">Index Range Killer (EMA 75/150)</option><option value="irk_plus">Index Range Killer + (EMA 30/75/150)</option></select></div>
-<div class="field"><label>Activo (CMC)</label>
-<div style="display:flex;gap:6px"><input id="fAssetSearch" placeholder="Buscar: BTC, Ethereum, SOL..." autocomplete="off"><button class="btn sm" id="fAssetBtn" type="button">Buscar</button></div>
+<div class="field"><label>Proveedor de datos</label>
+<select id="fProvider"><option value="coinmarketcap">CoinMarketCap (Criptomonedas)</option><option value="deriv">Deriv (Oro, NASDAQ, Indices)</option></select></div>
+<div id="cmcFields">
+<div class="field"><label>Buscar cripto en CMC</label>
+<div style="display:flex;gap:6px"><input id="fAssetSearch" placeholder="BTC, Ethereum, SOL, Doge..." autocomplete="off"><button class="btn sm" id="fAssetBtn" type="button">Buscar</button></div>
 <div id="fAssetResults" style="margin-top:6px"></div>
 <input type="hidden" name="symbol" id="fSymbol"></div>
+</div>
+<div id="derivFields" class="hidden">
+<div class="field"><label>Activo Deriv (sintetico)</label>
+<select id="fDerivSymbol"><option value="frxXAUUSD">Oro (XAU/USD)</option><option value="OTC_NDX">NASDAQ 100 (NDX)</option><option value="R_100">Step Index (R_100)</option><option value="R_75">Boom/Crash 75</option><option value="R_100">Boom/Crash 100</option><option value="frxXAGUSD">Plata (XAG/USD)</option><option value="frxEURUSD">EUR/USD</option><option value="frxGBPUSD">GBP/USD</option></select></div>
+</div>
 <div class="field"><label>Temporalidad</label>
 <select name="timeframe" id="fTimeframe"><option value="1m">1 minuto</option><option value="5m" selected>5 minutos</option><option value="15m">15 minutos</option><option value="30m">30 minutos</option><option value="1h">1 hora</option><option value="4h">4 horas</option></select></div>
 <div class="field"><label>Capital inicial ($)</label><input name="capital" type="number" value="50" step="10" min="10"></div>
@@ -305,9 +313,26 @@ function searchAssets(){
   });
 }
 
+function switchProvider(){
+  var p=$("fProvider").value;
+  if(p==="deriv"){
+    $("cmcFields").className="hidden";
+    $("derivFields").className="";
+    _selectedAsset=$("fDerivSymbol").value;
+    $("createBotBtn").disabled=false;
+  }else{
+    $("cmcFields").className="";
+    $("derivFields").className="hidden";
+    _selectedAsset=null;$("fSymbol").value="";$("fAssetSearch").value="";$("fAssetResults").innerHTML="";
+    $("createBotBtn").disabled=true;
+  }
+}
+
 async function createBot(){
-  if(!_selectedAsset){$("admMsg").textContent="Selecciona un activo de la lista primero.";$("admMsg").className="dn";return;}
-  var f={strategy_key:$("fStrategy").value,symbol:_selectedAsset,provider:"coinmarketcap",timeframe:$("fTimeframe").value,capital:parseFloat(document.querySelector('[name=capital]').value)||50,lot:parseFloat(document.querySelector('[name=lot]').value)||0.01,max_positions:parseInt(document.querySelector('[name=max_positions]').value)||1};
+  var provider=$("fProvider").value;
+  var symbol=provider==="deriv"?$("fDerivSymbol").value:_selectedAsset;
+  if(!symbol){$("admMsg").textContent="Selecciona un activo primero.";$("admMsg").className="dn";return;}
+  var f={strategy_key:$("fStrategy").value,symbol:symbol,provider:provider,timeframe:$("fTimeframe").value,capital:parseFloat(document.querySelector('[name=capital]').value)||50,lot:parseFloat(document.querySelector('[name=lot]').value)||0.01,max_positions:parseInt(document.querySelector('[name=max_positions]').value)||1};
   $("createBotBtn").disabled=true;
   $("admMsg").textContent="Creando bot...";$("admMsg").className="k";
   try{
@@ -315,11 +340,7 @@ async function createBot(){
     $("admMsg").textContent="Bot creado: "+r.bot_id+" ("+r.symbol+"/"+r.timeframe+")";
     $("admMsg").className="up";
     admLoad();
-    _selectedAsset=null;
-    $("fSymbol").value="";
-    $("fAssetSearch").value="";
-    $("fAssetResults").innerHTML="";
-    $("createBotBtn").disabled=true;
+    _selectedAsset=null;$("fSymbol").value="";$("fAssetSearch").value="";$("fAssetResults").innerHTML="";$("createBotBtn").disabled=true;
   }catch(e){
     var msg="Error desconocido";
     if(typeof e==="number")msg="Error HTTP "+e;
@@ -354,6 +375,8 @@ function init(){
   $("tabBots").addEventListener("click",function(){$("tabBots").className="sel";$("tabNew").className="";$("admBots").className="";$("admNew").className="hidden";});
   $("tabNew").addEventListener("click",function(){$("tabNew").className="sel";$("tabBots").className="";$("admNew").className="";$("admBots").className="hidden";});
   $("createBotBtn").addEventListener("click",function(e){e.preventDefault();createBot();});
+  $("fProvider").addEventListener("change",switchProvider);
+  $("fDerivSymbol").addEventListener("change",function(){_selectedAsset=this.value;$("createBotBtn").disabled=false;});
   $("fAssetBtn").addEventListener("click",function(){searchAssets();});
   $("fAssetSearch").addEventListener("keydown",function(e){if(e.key==="Enter"){e.preventDefault();searchAssets();}});
 
