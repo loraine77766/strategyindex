@@ -30,12 +30,12 @@ class Orchestrator:
         self.db = Store(settings.db_path, database_url=settings.database_url)
         self._seed_db()
         self.bots: dict[str, BotRuntime] = {}
+        self._providers: dict = {}
+        self._provider_tasks: list = []
         self._load_bots()
         self.prices: dict[str, dict] = {}
         self.conn: dict[str, dict] = {}
         self.ui: asyncio.Queue = asyncio.Queue()
-        self._providers: dict = {}
-        self._provider_tasks: list = []
         self._build_providers()
 
     # ---- providers ----
@@ -85,7 +85,6 @@ class Orchestrator:
             rt.broker.price_fn = lambda sym: (self.prices.get(sym) or {}).get("price")
             rt.broker.restore(self.db.open_trades(b.bot_id))
             self.bots[b.bot_id] = rt
-        self._sync_cmc_ids()
 
     def _cmc(self):
         if getattr(self, "_cmc_catalog", None) is None:

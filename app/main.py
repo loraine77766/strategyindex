@@ -33,7 +33,8 @@ async def _run_provider():
 @app.on_event("startup")
 async def _startup():
     global _provider_task
-    log.info("startup: provider=%s, bots=%d", _orch.provider.name, len(_orch.bots))
+    providers = list(_orch._providers.keys())
+    log.info("startup: providers=%s, bots=%d", providers, len(_orch.bots))
     _provider_task = asyncio.create_task(_run_provider())
 
 
@@ -47,4 +48,8 @@ async def _shutdown():
             await _provider_task
         except asyncio.CancelledError:
             pass
-    _orch.provider.stop()
+    for prov in _orch._providers.values():
+        try:
+            prov.stop()
+        except Exception:
+            pass
