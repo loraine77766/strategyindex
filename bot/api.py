@@ -197,6 +197,15 @@ def create_app(orch, app=None):
         d["seeded_candles"] = seeded
         return d
 
+    @app.delete("/api/admin/bots/{bot_id}")
+    def admin_delete(bot_id: str, admin: bool = Depends(require_admin)):
+        rt = orch.bots.get(bot_id)
+        if not rt:
+            raise HTTPException(status_code=404, detail="bot inexistente")
+        orch.db.delete_bot(bot_id)
+        del orch.bots[bot_id]
+        return {"deleted": bot_id}
+
     @app.patch("/api/admin/bots/{bot_id}")
     def admin_update(bot_id: str, body: dict, admin: bool = Depends(require_admin)):
         if "timeframe" in body:

@@ -278,6 +278,13 @@ class Store:
             self._execute("INSERT OR REPLACE INTO bots VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)", vals)
         self._commit()
 
+    def delete_bot(self, bot_id):
+        if self._pg:
+            self._execute("DELETE FROM bots WHERE bot_id=%s", (bot_id,))
+        else:
+            self._execute("DELETE FROM bots WHERE bot_id=?", (bot_id,))
+        self._commit()
+
     def bots(self):
         return self._rows(self._execute("SELECT * FROM bots ORDER BY created"))
 

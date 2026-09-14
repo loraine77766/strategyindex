@@ -4,76 +4,73 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#0b1220">
-<meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <title>StrategyIndex</title>
 <style>
 :root{--bg:#0b1220;--card:#141d31;--card2:#0f1729;--txt:#e9eff9;--mut:#8ea0bd;--up:#22c55e;--dn:#ef4444;--acc:#4f7cff;--line:#22314f;--safe-b:env(safe-area-inset-bottom,0px)}
-*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
-body{margin:0;background:var(--bg);color:var(--txt);font:14px/1.5 "Inter",system-ui,-apple-system,sans-serif;-webkit-font-smoothing:antialiased}
-header{display:flex;gap:10px;align-items:center;padding:12px 16px;padding-top:calc(12px + env(safe-area-inset-top,0px));background:rgba(8,14,26,.92);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);border-bottom:1px solid var(--line);position:sticky;top:0;z-index:100}
-.logo{display:flex;align-items:center;gap:8px;font-weight:800;font-size:16px;letter-spacing:.3px;white-space:nowrap}
-.logo svg{flex-shrink:0}
-.badge{padding:3px 10px;border-radius:20px;font-size:11px;background:#222f4d;color:var(--mut);transition:all .3s;white-space:nowrap}
-.badge.on{background:rgba(34,197,94,.15);color:var(--up)}.badge.off{background:rgba(239,68,68,.15);color:var(--dn)}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--txt);font:14px/1.5 "Inter",system-ui,sans-serif}
+header{display:flex;gap:10px;align-items:center;padding:14px 16px;background:rgba(8,14,26,.95);border-bottom:1px solid var(--line);position:sticky;top:0;z-index:100}
+.logo{display:flex;align-items:center;gap:8px;font-weight:800;font-size:16px}
+.badge{padding:3px 10px;border-radius:20px;font-size:11px;background:#222f4d;color:var(--mut)}
+.badge.on{background:rgba(34,197,94,.15);color:var(--up)}
+.badge.off{background:rgba(239,68,68,.15);color:var(--dn)}
 .hspace{flex:1}
-.k{color:var(--mut);font-size:12px}
-button{font:inherit}
-.btn{background:var(--acc);color:#fff;border:0;border-radius:8px;padding:8px 14px;cursor:pointer;font-size:13px;transition:transform .15s,opacity .15s;white-space:nowrap}
-.btn:hover{transform:translateY(-1px)}.btn:active{transform:scale(.97)}.btn:disabled{opacity:.45;cursor:not-allowed}
+.btn{background:var(--acc);color:#fff;border:0;border-radius:8px;padding:8px 14px;cursor:pointer;font-size:13px}
 .btn.ghost{background:transparent;border:1px solid var(--line);color:var(--txt)}
 .btn.sm{padding:5px 10px;font-size:12px;border-radius:6px}
-main{max-width:1200px;margin:0 auto;padding:14px 14px calc(20px + var(--safe-b))}
-.filters{display:flex;gap:6px;flex-wrap:wrap;margin:0 0 12px}
-.filters input,.filters select{background:var(--card2);color:var(--txt);border:1px solid var(--line);border-radius:8px;padding:7px 10px;font-size:13px;flex:1;min-width:0}
-.filters input{min-width:120px}
-.filters select{min-width:90px}
-.grid{display:grid;grid-template-columns:1fr;gap:10px}
-@media(min-width:480px){.grid{grid-template-columns:repeat(2,1fr)}}
-@media(min-width:768px){.grid{grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:14px}}
-.card{background:linear-gradient(180deg,var(--card),var(--card2));border:1px solid var(--line);border-radius:12px;padding:14px;cursor:pointer;transition:transform .18s,border-color .18s,box-shadow .18s;animation:fade .4s}
-.card:hover{transform:translateY(-2px);border-color:var(--acc);box-shadow:0 6px 24px rgba(79,124,255,.12)}
-.card:active{transform:scale(.98)}
-@keyframes fade{from{opacity:0;transform:translateY(6px)}to{opacity:1}}
-.card .top{display:flex;justify-content:space-between;align-items:flex-start;gap:6px;margin-bottom:6px}
-.card h3{margin:0;font-size:15px;font-weight:700;line-height:1.2}
-.card .pair{display:inline-flex;align-items:center;gap:4px;background:rgba(79,124,255,.1);color:var(--acc);border-radius:6px;padding:2px 8px;font-size:12px;font-weight:600}
-.card .pair svg{flex-shrink:0}
-.card .sym{color:var(--mut);font-size:12px;margin:2px 0 4px;display:flex;gap:6px;align-items:center;flex-wrap:wrap}
+.btn.danger{background:rgba(239,68,68,.15);color:var(--dn);border:1px solid rgba(239,68,68,.3)}
+main{max-width:900px;margin:0 auto;padding:16px calc(16px + env(safe-area-inset-left,0px)) calc(20px + var(--safe-b))}
+
+.bot-list{display:flex;flex-direction:column;gap:10px}
+.bot-card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:16px;cursor:pointer;transition:transform .15s,border-color .15s}
+.bot-card:hover{transform:translateY(-2px);border-color:var(--acc)}
+.bot-card:active{transform:scale(.98)}
+
+.bot-top{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:8px}
+.bot-name{font-weight:700;font-size:15px}
+.bot-pair{display:inline-flex;align-items:center;gap:4px;background:rgba(79,124,255,.1);color:var(--acc);border-radius:6px;padding:2px 8px;font-size:12px;font-weight:600}
+.bot-meta{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:8px}
 .st{display:inline-block;font-size:10px;padding:2px 8px;border-radius:10px;font-weight:600;text-transform:uppercase;letter-spacing:.3px}
-.st.running{background:rgba(34,197,94,.15);color:var(--up)}.st.stopped{background:rgba(142,160,189,.15);color:var(--mut)}
-.st.RUNNING{background:rgba(34,197,94,.12);color:var(--up)}.st.WAITING_FOR_MARKET_DATA{background:rgba(251,191,36,.12);color:#fbbf24}.st.RECONNECTING{background:rgba(239,68,68,.12);color:var(--dn)}.st.ERROR{background:rgba(239,68,68,.15);color:var(--dn)}.st.STARTING{background:rgba(79,124,255,.12);color:var(--acc)}
-.big{font-size:24px;font-weight:800;margin:4px 0 2px}
-.pnl{font-weight:700;font-size:13px}.up{color:var(--up)}.dn{color:var(--dn)}
-.stats-row{display:grid;grid-template-columns:repeat(3,1fr);gap:4px;margin-top:8px}
-.stat{text-align:center;padding:4px 0;border-top:1px solid rgba(34,49,79,.5)}
-.stat .lbl{display:block;color:var(--mut);font-size:10px;text-transform:uppercase;letter-spacing:.4px}
-.stat .val{display:block;font-size:13px;font-weight:600}
+.st.running{background:rgba(34,197,94,.15);color:var(--up)}
+.st.stopped{background:rgba(142,160,189,.15);color:var(--mut)}
+.st.WAITING_FOR_MARKET_DATA{background:rgba(251,191,36,.12);color:#fbbf24}
+.st.ERROR{background:rgba(239,68,68,.15);color:var(--dn)}
+
+.bot-balance{font-size:22px;font-weight:800;margin:4px 0 2px}
+.bot-pnl{font-weight:700;font-size:13px}
+.up{color:var(--up)}.dn{color:var(--dn)}
+
+.bot-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:4px;margin-top:10px;border-top:1px solid var(--line);padding-top:10px}
+.bot-stats .s{text-align:center}
+.bot-stats .s .l{display:block;color:var(--mut);font-size:10px;text-transform:uppercase;letter-spacing:.4px}
+.bot-stats .s .v{display:block;font-size:13px;font-weight:600}
+
+.empty{text-align:center;padding:40px 20px;color:var(--mut);border:1px dashed var(--line);border-radius:12px}
+.empty h3{margin:0 0 6px;color:var(--txt);font-size:16px}
+
+.k{color:var(--mut);font-size:12px}
+
 section.panel{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:14px;margin-top:12px}
 table{width:100%;border-collapse:collapse;font-size:12px}
 td,th{padding:6px 4px;border-bottom:1px solid var(--line);text-align:left}
 th{color:var(--mut);font-size:11px;text-transform:uppercase;letter-spacing:.3px}
-canvas.chart{width:100%;height:180px;background:#080e1a;border-radius:8px;border:1px solid var(--line)}
-h2.sec{font-size:16px;margin:16px 0 4px}
-.skel{border-radius:12px;background:linear-gradient(90deg,#141d31 25%,#1d2a47 50%,#141d31 75%);background-size:200% 100%;animation:sh 1.2s infinite;min-height:140px}
-@keyframes sh{to{background-position:-200% 0}}
-.empty,.error{border:1px dashed var(--line);border-radius:12px;padding:24px;text-align:center;color:var(--mut);font-size:13px}
-.error{color:var(--dn);border-color:rgba(239,68,68,.3)}
-form.adm{display:grid;grid-template-columns:1fr;gap:8px;margin:10px 0}
-@media(min-width:480px){form.adm{grid-template-columns:repeat(auto-fit,minmax(140px,1fr))}}
-form.adm input,form.adm select{background:var(--card2);color:var(--txt);border:1px solid var(--line);border-radius:8px;padding:7px 10px;font-size:13px}
-.tabs{display:flex;gap:6px;margin:12px 0;flex-wrap:wrap}
-.tabs button{background:transparent;border:1px solid var(--line);color:var(--mut);border-radius:8px;padding:6px 12px;cursor:pointer;font-size:13px;transition:all .15s}
-.tabs button.sel{background:var(--acc);color:#fff;border-color:var(--acc)}
-.hidden{display:none!important}
-.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+canvas.chart{width:100%;height:160px;background:#080e1a;border-radius:8px;border:1px solid var(--line)}
+
 .detail-header{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:10px}
 .detail-header h2{margin:0;font-size:18px}
 .detail-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin:10px 0}
-@media(min-width:480px){.detail-grid{grid-template-columns:repeat(4,1fr)}}
 .detail-grid .item{background:var(--card2);border-radius:8px;padding:8px;text-align:center}
 .detail-grid .item .lbl{display:block;color:var(--mut);font-size:10px;text-transform:uppercase;letter-spacing:.3px}
 .detail-grid .item .val{display:block;font-size:16px;font-weight:700;margin-top:2px}
+
+.tabs{display:flex;gap:6px;margin:12px 0;flex-wrap:wrap}
+.tabs button{background:transparent;border:1px solid var(--line);color:var(--mut);border-radius:8px;padding:6px 12px;cursor:pointer;font-size:13px}
+.tabs button.sel{background:var(--acc);color:#fff;border-color:var(--acc)}
+.hidden{display:none!important}
+.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+form.adm{display:grid;grid-template-columns:1fr;gap:8px;margin:10px 0}
+form.adm input,form.adm select{background:var(--card2);color:var(--txt);border:1px solid var(--line);border-radius:8px;padding:7px 10px;font-size:13px}
+
 #admOverlay{position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:200;display:flex;align-items:center;justify-content:center;padding:20px}
 #admOverlay .box{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:20px;width:100%;max-width:360px}
 #admOverlay input{width:100%;background:var(--card2);color:var(--txt);border:1px solid var(--line);border-radius:8px;padding:10px;font-size:14px;margin:10px 0}
@@ -82,7 +79,7 @@ form.adm input,form.adm select{background:var(--card2);color:var(--txt);border:1
 <body>
 <header>
 <div class="logo">
-<svg width="22" height="22" viewBox="0 0 24 24" fill="none"><path d="M3 17l5-6 4 3 6-8" stroke="#4f7cff" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/><path d="M18 6h-4M18 6v4" stroke="#22c55e" stroke-width="2.4" stroke-linecap="round"/><circle cx="3" cy="17" r="1.5" fill="#4f7cff"/><circle cx="18" cy="6" r="1.5" fill="#22c55e"/></svg>
+<svg width="22" height="22" viewBox="0 0 24 24" fill="none"><path d="M3 17l5-6 4 3 6-8" stroke="#4f7cff" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/><path d="M18 6h-4M18 6v4" stroke="#22c55e" stroke-width="2.4" stroke-linecap="round"/></svg>
 StrategyIndex</div>
 <span id="cConn" class="badge off">offline</span>
 <div class="hspace"></div>
@@ -91,17 +88,12 @@ StrategyIndex</div>
 
 <main>
 <div id="viewPub">
-<div class="filters">
-<input id="fBot" placeholder="Buscar bot…" oninput="renderPub()">
-<select id="fSym" onchange="renderPub()"><option value="">Todos</option></select>
-<select id="fTf" onchange="renderPub()"><option value="">TF</option><option>1m</option><option>5m</option><option>15m</option><option>30m</option><option>1h</option><option>4h</option></select>
-</div>
-<div id="pubList"><div class="grid"><div class="skel"></div><div class="skel"></div><div class="skel"></div></div></div>
-<section id="pubDetail" class="panel hidden"></section>
+<div id="pubList"></div>
+<section id="pubDetail" class="hidden"></section>
 </div>
 
 <div id="viewAdm" class="hidden">
-<div class="tabs"><button class="sel" onclick="admTab('bots',this)">Bots</button><button onclick="admTab('new',this)">Crear bot</button><button onclick="admTab('mkt',this)">Market</button><button class="btn sm ghost" onclick="admLogout()" style="margin-left:auto">Salir</button></div>
+<div class="tabs"><button class="sel" onclick="admTab('bots',this)">Bots</button><button onclick="admTab('new',this)">Crear bot</button><button class="btn sm ghost" onclick="admLogout()" style="margin-left:auto">Salir</button></div>
 <div id="admBots"></div>
 <div id="admNew" class="hidden"><section class="panel"><b>Crear bot</b>
 <form class="adm" id="frmBot">
@@ -111,20 +103,14 @@ StrategyIndex</div>
 <input name="capital" type="number" value="50" step="1" placeholder="Capital">
 <input name="lot" type="number" value="0.01" step="0.001" placeholder="Lote">
 <input name="max_positions" type="number" value="1" min="1" placeholder="Max pos">
-<input name="spread" type="number" value="0.0001" step="0.0001" placeholder="Spread">
-<input name="commission" type="number" value="0.0005" step="0.0001" placeholder="Comisión">
 </form><button class="btn" onclick="createBot()">Crear</button><div id="admMsg" class="k" style="margin-top:6px"></div></section></div>
-<div id="admDetail"></div>
-<div id="admMkt" class="hidden"><section class="panel"><b>Market Data</b><div id="mktInfo" class="k"></div>
-<div class="row" style="margin:8px 0"><input id="mktQ" placeholder="Buscar activo…"><button class="btn sm" onclick="mktSearch()">Buscar</button></div>
-<div id="mktOut"></div></section></div>
 </div>
 </main>
 
 <div id="admOverlay" class="hidden" onclick="if(event.target===this)closeAdm()">
 <div class="box">
 <b>Admin</b>
-<input id="admTok" type="password" placeholder="Token de administrador" onkeydown="if(event.key==='Enter')admLogin()">
+<input id="admTok" type="password" placeholder="Token" onkeydown="if(event.key==='Enter')admLogin()">
 <button class="btn" onclick="admLogin()" style="width:100%">Entrar</button>
 <div class="k" style="margin-top:8px;text-align:center">Cierra para cancelar</div>
 </div>
@@ -132,59 +118,63 @@ StrategyIndex</div>
 
 <script>
 const $=id=>document.getElementById(id);
-let BOTS=[],SEL=null,ADM=sessionStorage.getItem("adm")||"";
+let BOTS=[],ADM=sessionStorage.getItem("adm")||"";
 const H=h=>fetch(h,{headers:ADM?{"X-Admin-Token":ADM}:{}).then(r=>{if(!r.ok)throw r.status;return r.json()});
 const J=(u,b,m)=>fetch(u,{method:m||"POST",headers:Object.assign({"Content-Type":"application/json"},ADM?{"X-Admin-Token":ADM}:{}),body:JSON.stringify(b)}).then(r=>{if(!r.ok)throw r.status;return r.json()});
 
-function pairIcon(sym){
-const c={BTC:'#f7931a',ETH:'#627eea',SOL:'#9945ff',XAU:'#ffd700',ETHUSD:'#627eea'}[sym]||'#4f7cff';
-return `<svg width="14" height="14" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="10" stroke="${c}" stroke-width="2" opacity=".6"/><text x="12" y="16" text-anchor="middle" fill="${c}" font-size="11" font-weight="700">${sym[0]}</text></svg>`;
-}
-
-function skel(el,n){$(el).innerHTML='<div class="grid">'+('<div class="skel"></div>'.repeat(n||3))+"</div>";}
+function pairColor(sym){return{BTC:'#f7931a',ETH:'#627eea',SOL:'#9945ff',XAU:'#ffd700'}[sym]||'#4f7cff';}
 
 async function boot(){
 try{
 BOTS=await H("/api/bots");
-const sy=[...new Set(BOTS.map(b=>b.symbol))];
-$("fSym").innerHTML='<option value="">Todos</option>'+sy.map(s=>`<option>${s}</option>`).join("");
-renderPub();
-}catch(e){$("pubList").innerHTML='<div class="error">Error cargando datos. Reintenta.</div>';}
+renderList();
+}catch(e){
+$("pubList").innerHTML='<div class="empty"><h3>Error</h3>No se pudieron cargar los datos.</div>';
+}
 $("cConn").textContent="en línea";$("cConn").className="badge on";
 }
 
-function renderPub(){
-const f=($("fBot").value||"").toLowerCase();
-const list=BOTS.filter(b=>(!f||b.name.toLowerCase().includes(f)||b.symbol.toLowerCase().includes(f))&&(!$("fSym").value||b.symbol===$("fSym").value)&&(!$("fTf").value||b.timeframe===$("fTf").value));
-if(!list.length){$("pubList").innerHTML='<div class="empty">Sin bots para este filtro.</div>';return;}
-$("pubList").innerHTML='<div class="grid">'+list.map(b=>`<div class="card" onclick="detail('${b.bot_id}')">
-<div class="top"><h3>${b.name}</h3><span class="pair">${pairIcon(b.symbol)}${b.symbol}</span></div>
-<div class="sym"><span>${b.timeframe}</span><span class="st ${b.status}">${b.status}</span><span class="st ${b.state||''}">${(b.state||'').replace(/_/g,' ')}</span></div>
-<div class="big">$${b.balance.toFixed(2)}</div>
-<div class="pnl ${b.pnl>=0?'up':'dn'}">${b.pnl>=0?'+':''}${b.pnl_pct.toFixed(2)}% · $${b.pnl.toFixed(2)}</div>
-<div class="stats-row">
-<div class="stat"><span class="lbl">Ops</span><span class="val">${b.total}</span></div>
-<div class="stat"><span class="lbl">Win</span><span class="val ${b.win_rate>=50?'up':'dn'}">${b.win_rate}%</span></div>
-<div class="stat"><span class="lbl">DD</span><span class="val dn">${b.max_drawdown}%</span></div>
+function renderList(){
+if(!BOTS.length){
+$("pubList").innerHTML='<div class="empty"><h3>Sin bots</h3>No hay bots configurados. Inicia sesión como Admin para crear uno.</div>';
+return;
+}
+$("pubList").innerHTML='<div class="bot-list">'+BOTS.map(b=>`<div class="bot-card" onclick="detail('${b.bot_id}')">
+<div class="bot-top">
+<span class="bot-name">${b.name}</span>
+<span class="bot-pair" style="color:${pairColor(b.symbol)};background:${pairColor(b.symbol)}15">${b.symbol}/${b.timeframe}</span>
 </div>
-<div class="k" style="margin-top:6px;text-align:right">Detalle →</div></div>`).join("")+"</div>";
+<div class="bot-meta">
+<span class="st ${b.status}">${b.status}</span>
+<span class="st ${b.state||''}">${(b.state||'').replace(/_/g,' ')}</span>
+</div>
+<div class="bot-balance">$${b.balance.toFixed(2)}</div>
+<div class="bot-pnl ${b.pnl>=0?'up':'dn'}">${b.pnl>=0?'+':''}${b.pnl_pct.toFixed(2)}% · $${b.pnl.toFixed(2)}</div>
+<div class="bot-stats">
+<div class="s"><span class="l">Ops</span><span class="v">${b.total}</span></div>
+<div class="s"><span class="l">Win</span><span class="v ${b.win_rate>=50?'up':'dn'}">${b.win_rate}%</span></div>
+<div class="s"><span class="l">DD</span><span class="v dn">${b.max_drawdown}%</span></div>
+</div>
+</div>`).join("")+"</div>";
 }
 
 async function detail(id){
-SEL=id;const el=$("pubDetail");el.classList.remove("hidden");el.innerHTML='<div class="skel" style="min-height:120px"></div>';
+const el=$("pubDetail");el.classList.remove("hidden");el.innerHTML='<div style="padding:20px;color:var(--mut)">Cargando...</div>';
 try{
 const[bots,st,h]=await Promise.all([H("/api/bots"),H(`/api/bots/${id}/stats`),H(`/api/bots/${id}/history?limit=200`)]);
 const b=bots.find(x=>x.bot_id===id)||{};
 el.innerHTML=`
 <div class="detail-header">
-<h2>${pairIcon(b.symbol||'')} ${b.name||id}</h2>
-<span class="st ${b.status}">${b.status}</span><span class="st ${b.state||''}">${(b.state||'').replace(/_/g,' ')}</span>
+<h2>${b.name||id}</h2>
+<span class="st ${b.status}">${b.status}</span>
+<span class="st ${b.state||''}">${(b.state||'').replace(/_/g,' ')}</span>
+<span class="bot-pair" style="color:${pairColor(b.symbol)};background:${pairColor(b.symbol)}15">${b.symbol}/${b.timeframe}</span>
+<button class="btn sm ghost" onclick="closeDetail()" style="margin-left:auto">Volver</button>
 </div>
-<div class="k">${b.symbol||''} · ${b.timeframe||''} · Estrategia privada</div>
 <div class="detail-grid">
 <div class="item"><span class="lbl">Balance</span><span class="val">$${st.balance.toFixed(2)}</span></div>
 <div class="item"><span class="lbl">Equity</span><span class="val">$${st.equity.toFixed(2)}</span></div>
-<div class="item"><span class="lbl">P&L</span><span class="val ${st.pnl>=0?'up':'dn'}">${st.pnl>=0?'+':''}${st.pnl.toFixed(2)}</span></div>
+<div class="item"><span class="lbl">P&L</span><span class="val ${st.pnl>=0?'up':'dn'}">${st.pnl>=0?'+':''}$${st.pnl.toFixed(2)}</span></div>
 <div class="item"><span class="lbl">P&L %</span><span class="val ${st.pnl_pct>=0?'up':'dn'}">${st.pnl_pct.toFixed(2)}%</span></div>
 <div class="item"><span class="lbl">Win Rate</span><span class="val">${st.win_rate}%</span></div>
 <div class="item"><span class="lbl">Profit Factor</span><span class="val">${st.profit_factor}</span></div>
@@ -193,21 +183,17 @@ el.innerHTML=`
 </div>
 <h4>Equity</h4><canvas class="chart" id="cEq"></canvas>
 <h4>Drawdown</h4><canvas class="chart" id="cDd"></canvas>
-<h4>Por operación</h4><canvas class="chart" id="cTr"></canvas>
 <h4>Historial (${h.length})</h4>
-<table><tr><th>Dir</th><th>Entrada</th><th>Salida</th><th>P&L</th><th>%</th></tr>
-${h.slice(0,50).map(t=>`<tr><td><span class="st ${t.direction==='BUY'?'running':'stopped'}" style="font-size:10px">${t.direction}</span></td><td>${t.entry}</td><td>${t.exit||'—'}</td><td class="${t.pnl>=0?'up':'dn'}">${t.pnl!=null?t.pnl:'—'}</td><td class="${(t.pnl_pct||0)>=0?'up':'dn'}">${t.pnl_pct!=null?t.pnl_pct+'%':'—'}</td></tr>`).join("")||'<tr><td colspan="5">Sin operaciones todavía.</td></tr>'}</table>
-<button class="btn ghost" onclick="closeDetail()" style="margin-top:10px">← Volver</button>`;
-line("cEq",st.equity_curve,"#4f7cff");line("cDd",st.drawdown_curve,"#ef4444");bars("cTr",st.per_trade);
+<table><tr><th>Dir</th><th>Entrada</th><th>Salida</th><th>P&L</th></tr>
+${h.slice(0,50).map(t=>`<tr><td><span class="st ${t.direction==='BUY'?'running':'stopped'}" style="font-size:10px">${t.direction}</span></td><td>${t.entry}</td><td>${t.exit||'—'}</td><td class="${(t.pnl||0)>=0?'up':'dn'}">${t.pnl!=null?t.pnl:'—'}</td></tr>`).join("")||'<tr><td colspan="4">Sin operaciones todavía.</td></tr>'}</table>`;
+line("cEq",st.equity_curve,"#4f7cff");line("cDd",st.drawdown_curve,"#ef4444");
 el.scrollIntoView({behavior:"smooth"});
-}catch(e){el.innerHTML='<div class="error">Error cargando detalle.</div>';}
+}catch(e){el.innerHTML='<div style="padding:20px;color:var(--dn)">Error cargando detalle.</div>';}
 }
 
-function closeDetail(){$("pubDetail").classList.add("hidden");SEL=null;}
+function closeDetail(){$("pubDetail").classList.add("hidden");}
 
-function line(id,data,col){const c=$(id);if(!c)return;const g=c.getContext("2d");c.width=c.offsetWidth*2;c.height=360;g.scale(2,2);const w=c.offsetWidth,h=180;g.clearRect(0,0,w,h);if(!data||data.length<2){g.fillStyle="#8ea0bd";g.font="12px system-ui";g.fillText("Sin datos todavía.",12,24);return;}const mn=Math.min(...data),mx=Math.max(...data);g.strokeStyle=col;g.lineWidth=2;g.beginPath();data.forEach((v,i)=>{const x=8+i*(w-16)/(data.length-1),y=14+(h-28)*(1-(v-mn)/(mx-mn||1));i?g.lineTo(x,y):g.moveTo(x,y);});g.stroke();}
-
-function bars(id,data){const c=$(id);if(!c)return;const g=c.getContext("2d");c.width=c.offsetWidth*2;c.height=360;g.scale(2,2);const w=c.offsetWidth,h=180;g.clearRect(0,0,w,h);if(!data||!data.length){g.fillStyle="#8ea0bd";g.font="12px system-ui";g.fillText("Sin datos todavía.",12,24);return;}const mx=Math.max(...data.map(Math.abs),1);const n=Math.min(data.length,80);const recent=data.slice(-n);const bw=w/n;recent.forEach((v,i)=>{g.fillStyle=v>=0?"#22c55e":"#ef4444";const bh=Math.abs(v)/mx*80;const y=v>=0?h/2-bh:h/2;g.fillRect(i*bw+1,y,bw-2,bh||1);});g.strokeStyle="#22314f";g.lineWidth=1;g.beginPath();g.moveTo(0,h/2);g.lineTo(w,h/2);g.stroke();}
+function line(id,data,col){const c=$(id);if(!c)return;const g=c.getContext("2d");c.width=c.offsetWidth*2;c.height=320;g.scale(2,2);const w=c.offsetWidth,h=160;g.clearRect(0,0,w,h);if(!data||data.length<2){g.fillStyle="#8ea0bd";g.font="12px system-ui";g.fillText("Sin datos todavía.",12,24);return;}const mn=Math.min(...data),mx=Math.max(...data);g.strokeStyle=col;g.lineWidth=2;g.beginPath();data.forEach((v,i)=>{const x=8+i*(w-16)/(data.length-1),y=12+(h-24)*(1-(v-mn)/(mx-mn||1));i?g.lineTo(x,y):g.moveTo(x,y);});g.stroke();}
 
 function showAdmLogin(){if(ADM){admEnter();}else{$("admOverlay").classList.remove("hidden");$("admTok").focus();}}
 function closeAdm(){$("admOverlay").classList.add("hidden");}
@@ -215,27 +201,28 @@ async function admLogin(){ADM=$("admTok").value;try{await H("/api/admin/bots");s
 function admLogout(){ADM="";sessionStorage.removeItem("adm");$("viewPub").classList.remove("hidden");$("viewAdm").classList.add("hidden");}
 function admEnter(){$("viewPub").classList.add("hidden");$("viewAdm").classList.remove("hidden");admLoad();}
 
-function admTab(t,el){document.querySelectorAll("#viewAdm .tabs button").forEach(b=>b.classList.remove("sel"));el.classList.add("sel");["admBots","admNew","admMkt"].forEach(x=>$(x).classList.add("hidden"));$(t==="bots"?"admBots":t==="new"?"admNew":"admMkt").classList.remove("hidden");if(t==="mkt")mktLoad();}
+function admTab(t,el){document.querySelectorAll("#viewAdm .tabs button").forEach(b=>b.classList.remove("sel"));el.classList.add("sel");["admBots","admNew"].forEach(x=>$(x).classList.add("hidden"));$(t==="bots"?"admBots":"admNew").classList.remove("hidden");}
 
 async function admLoad(){
 const d=await H("/api/admin/bots");
-$("admBots").innerHTML=d.map(b=>`<section class="panel">
+$("admBots").innerHTML=d.map(b=>`<section class="panel" style="margin-bottom:10px">
 <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:6px">
-<b>${b.name}</b><div class="row"><span class="st ${b.status}">${b.status}</span><button class="btn sm ghost" onclick="admToggle('${b.bot_id}','${b.status}')">${b.status==='running'?'Pausar':'Reanudar'}</button></div></div>
-<div class="k" style="margin-top:4px">${b.strategy} · ${b.symbol} · ${b.timeframe} · ${b.provider} · $${b.capital} · lote ${b.lot}</div>
-<div id="ad-${b.bot_id}"></div></section>`).join("")||'<div class="empty">Sin bots.</div>';
+<b>${b.name}</b>
+<div class="row">
+<span class="st ${b.status}">${b.status}</span>
+<button class="btn sm ghost" onclick="admToggle('${b.bot_id}','${b.status}')">${b.status==='running'?'Pausar':'Reanudar'}</button>
+<button class="btn sm danger" onclick="admDelete('${b.bot_id}')">Borrar</button>
+</div></div>
+<div class="k" style="margin-top:4px">${b.strategy} · ${b.symbol} · ${b.timeframe} · $${b.capital}</div>
+</section>`).join("")||'<div class="empty"><h3>Sin bots</h3>Crea tu primer bot con el botón "Crear bot".</div>';
 }
 
 async function admToggle(id,st){await J(`/api/admin/bots/${id}`,{status:st==="running"?"stopped":"running"},"PATCH");admLoad();}
-
+async function admDelete(id){if(!confirm("¿Borrar este bot?"))return;await J(`/api/admin/bots/${id}`,{},"DELETE");admLoad();}
 async function createBot(){const f=Object.fromEntries(new FormData($("frmBot")).entries());try{await J("/api/admin/bots",f);$("admMsg").textContent="Bot creado.";$("admMsg").className="up";admLoad();}catch(e){$("admMsg").textContent="Error: revisa campos.";$("admMsg").className="dn";}}
 
-async function mktLoad(){try{const m=await H("/api/admin/market");$("mktInfo").innerHTML=`Proveedor: <b>${m.provider}</b> · Activos: <b>${m.catalog_assets}</b> · Sync: ${m.last_sync||"nunca"} · CMC: ${m.client.mode}`;}catch(e){$("mktInfo").textContent="Error.";}}
-async function mktSearch(){const q=$("mktQ").value;if(!q)return;try{const r=await H(`/api/admin/market/assets?q=${encodeURIComponent(q)}`);$("mktOut").innerHTML="<table><tr><th>ID</th><th>Symbol</th><th>Nombre</th><th>Rank</th><th>Precio</th></tr>"+r.map(a=>`<tr><td>${a.cmc_id}</td><td><b>${a.symbol}</b></td><td>${a.name}</td><td>#${a.rank}</td><td>$${a.price||'—'}</td></tr>`).join("")+"</table>";}catch(e){$("mktOut").innerHTML='<div class="empty">Sin resultados.</div>';}}
-
-if(ADM)$("who")&&($("who").textContent="admin");
 boot();
-setInterval(async()=>{try{BOTS=await H("/api/bots");if(SEL){}else renderPub();}catch(e){}},20000);
+setInterval(async()=>{try{BOTS=await H("/api/bots");renderList();}catch(e){}},20000);
 </script>
 </body>
 </html>
