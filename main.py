@@ -1,14 +1,9 @@
-"""StrategyIndex — RunYour.App entrypoint.
+"""StrategyIndex — FastAPI entrypoint (Faable + RunYour.App).
 
-FastAPI app detectable como `main:app`.
-Reutiliza 100% la lógica de bot/ (Orchestrator, API, provider, etc).
-Lifecycle: startup → seed + provider background | shutdown → stop provider.
+Faable:  uvicorn main:app --host 0.0.0.0 --port $PORT
+RunYour.App: detecta app/main.py con app = FastAPI()
 
-Uso local:
-    uvicorn main:app --host 0.0.0.0 --port 8000
-
-RunYour.App:
-    Detecta main:app automáticamente (Railpack o Dockerfile).
+Reutiliza 100% la logica de bot/.
 """
 import asyncio
 import os
@@ -20,25 +15,18 @@ from bot.config import Settings
 from bot.log import get_logger
 from bot.main import Orchestrator
 
-log = get_logger("runyourapp")
+log = get_logger("entry")
 
-# ---------------------------------------------------------------------------
-# Orchestrator singleton (created once, shared across all requests)
-# ---------------------------------------------------------------------------
+app = FastAPI(title="StrategyIndex")
+
 _settings = Settings()
 _orch = Orchestrator(_settings)
+_create_api(_orch, app=app)
 
-# Build the FastAPI app with all routes from bot.api
-app = _create_api(_orch)
-
-# ---------------------------------------------------------------------------
-# Background provider task
-# ---------------------------------------------------------------------------
 _provider_task = None
 
 
 async def _run_provider():
-    """Run the data provider (Deriv/CMC) in the background."""
     try:
         await _orch.seed_history()
         await _orch.run_client()
@@ -51,7 +39,7 @@ async def _run_provider():
 @app.on_event("startup")
 async def _startup():
     global _provider_task
-    log.info("RunYour.App startup: provider=%s, bots=%d, port=%s",
+    log.info("startup: provider=%s, bots=%d, port=%s",
              _orch.provider.name, len(_orch.bots), _settings.port)
     _provider_task = asyncio.create_task(_run_provider())
 
@@ -59,7 +47,7 @@ async def _startup():
 @app.on_event("shutdown")
 async def _shutdown():
     global _provider_task
-    log.info("RunYour.App shutdown")
+    log.info("shutdown")
     if _provider_task and not _provider_task.done():
         _provider_task.cancel()
         try:

@@ -21,8 +21,17 @@ from .strategies import Signal
 log = get_logger("core")
 
 
-def default_bots():
+def default_bots(provider="deriv"):
     now = int(time.time())
+    if provider == "coinmarketcap":
+        return [
+            BotInstance("cmc-btc-1h", "irk", "BTC", "coinmarketcap", "1h",
+                        50.0, 0.01, 1, "running", now),
+            BotInstance("cmc-eth-1h", "irk", "ETH", "coinmarketcap", "1h",
+                        50.0, 0.01, 1, "running", now),
+            BotInstance("cmc-sol-1h", "irk", "SOL", "coinmarketcap", "1h",
+                        50.0, 0.01, 1, "running", now),
+        ]
     return [
         BotInstance("irk-xau-5m", "irk", "frxXAUUSD", "deriv", "5m",
                     50.0, 0.01, 1, "running", now),
@@ -69,7 +78,7 @@ class Orchestrator:
                     n += 1
                 log.info("migrados %d assignments a bots", n)
             else:
-                for b in default_bots():
+                for b in default_bots(self.s.provider):
                     if b.symbol in self.s.symbols:
                         self.db.save_bot(b)
 
