@@ -1,11 +1,10 @@
-"""StrategyIndex: orquestador multibot.
+"""StrategyIndex: orquestador multibot multi-proveedor.
 
 TICK -> CandleEngine -> CANDLE CLOSED -> Indicators -> Strategy ->
 Signal -> BrokerInterface (SimulatedBroker por bot).
 
-TICKS = DATOS. VELAS CERRADAS = DECISIONES.
-Cada bot: capital, lote, max_positions, broker, builder y stats propios.
-Un fallo en un bot no detiene a los demás (try/except por bot).
+Cada bot indica su provider. El orchestrator corre un provider por tipo
+(CMC, Yahoo, etc.) en paralelo. Un fallo en un bot no detiene a los demas.
 """
 import asyncio
 import time
@@ -32,38 +31,48 @@ class Orchestrator:
         self._seed_db()
         self.bots: dict[str, BotRuntime] = {}
         self._load_bots()
-        self.provider = create_provider(settings)  # hoy: DerivProvider
-        self.provider.on_tick = self._tick
-        self.provider.on_status = self._status
         self.prices: dict[str, dict] = {}
-        self.conn = {"connected": False, "mode": "unknown",
-                     "provider": self.provider.name}
+        self.conn: dict[str, dict] = {}
         self.ui: asyncio.Queue = asyncio.Queue()
+        self._providers: dict = {}
+        self._provider_tasks: list = []
+        self._build_providers()
+
+    # ---- providers ----
+    def _build_providers(self):
+        seen = {}
+        for rt in self.bots.values():
+            pname = rt.bot.provider
+            if pname not in seen:
+                prov = create_provider(self._make_settings(pname))
+                prov.on_tick = self._tick
+                prov.on_status = lambda info, pn=pname: self._status(pn, info)
+                self._providers[pname] = prov
+                self.conn[pname] = {"connected": False, "mode": "unknown",
+                                     "provider": pname}
+                seen[pname] = prov
+
+    def _make_settings(self, provider_name):
+        s = Settings()
+        s.provider = provider_name
+        return s
+
+    def _get_provider(self, provider_name):
+        if provider_name not in self._providers:
+            prov = create_provider(self._make_settings(provider_name))
+            prov.on_tick = self._tick
+            prov.on_status = lambda info, pn=provider_name: self._status(pn, info)
+            self._providers[provider_name] = prov
+            self.conn[provider_name] = {"connected": False, "mode": "unknown",
+                                         "provider": provider_name}
+        return self._providers[provider_name]
+
+    def _provider_for_bot(self, bot):
+        return self._get_provider(bot.provider)
 
     # ---- bots ----
     def _seed_db(self):
-        for sym in self.s.symbols:
-            self.db.upsert_market(sym, 1, 1 if sym == "frxXAUUSD" else 0)
-        if not self.db.bots():
-            legacy = self.db.assignments()
-            if legacy:
-                # Migración única: assignments -> bots (ema72_150→irk 75/150,
-                # ema30_72_150→irk_plus 30/75/150 según especificación nueva).
-                now = int(time.time())
-                n = 0
-                for r in legacy:
-                    if not r["onoff"]:
-                        continue
-                    key = "irk" if r["strategy"] == "ema72_150" else "irk_plus"
-                    b = BotInstance(f"mig-{r['id']}", key, r["symbol"], "deriv",
-                                    r["timeframe"], 50.0, 0.01, 1, "running", now)
-                    self.db.save_bot(b)
-                    n += 1
-                log.info("migrados %d assignments a bots", n)
-            else:
-                for b in default_bots(self.s.provider):
-                    if b.symbol in self.s.symbols:
-                        self.db.save_bot(b)
+        pass
 
     def _load_bots(self):
         for r in self.db.bots():
@@ -79,7 +88,6 @@ class Orchestrator:
         self._sync_cmc_ids()
 
     def _cmc(self):
-        """Una sola instancia CMC compartida (caché y rate-limit únicos)."""
         if getattr(self, "_cmc_catalog", None) is None:
             from .cmc_client import CMCClient
             from .cmc_catalog import AssetCatalog
@@ -89,9 +97,8 @@ class Orchestrator:
         return self._cmc_catalog
 
     def _sync_cmc_ids(self):
-        """Resuelve una vez los ids CMC de los bots y los reutiliza."""
-        prov = getattr(self, "provider", None)
-        if prov is None or prov.name != "coinmarketcap":
+        prov = self._providers.get("coinmarketcap")
+        if prov is None:
             return
         for rt in self.bots.values():
             if rt.bot.provider == "coinmarketcap" and rt.bot.provider_ref:
@@ -120,6 +127,8 @@ class Orchestrator:
                 raise ValueError(f"activo CMC no disponible: {symbol}")
             ref = str(hit["cmc_id"])
             symbol = (hit["symbol"] or symbol).upper()
+        elif provider == "yahoo":
+            symbol = symbol.upper()
         b = BotInstance(f"bot-{uuid.uuid4().hex[:8]}", strategy_key, symbol, provider,
                         timeframe, capital, lot, max_positions, "running",
                         int(time.time()), spread, commission, True, ref)
@@ -129,6 +138,7 @@ class Orchestrator:
         self.bots[b.bot_id] = rt
         self.db.upsert_market(symbol, 1, 0)
         self._sync_cmc_ids()
+        asyncio.create_task(self.seed_bot(b.bot_id))
         return b
 
     def update_bot(self, bot_id, **kw):
@@ -146,15 +156,12 @@ class Orchestrator:
         self.db.save_bot(rt.bot)
         return rt.bot
 
-    # ---- provider ----
+    # ---- seeding ----
     async def seed_history(self):
-        # Histórico inicial: prepara velas+indicadores SIN evaluar ni operar.
-        # El bot solo evaluará velas cerradas NUEVAS desde este punto.
         for bid in list(self.bots):
             await self.seed_bot(bid)
 
     async def seed_bot(self, bot_id):
-        """Seed bajo demanda (bots creados por API tras el arranque)."""
         rt = self.bots.get(bot_id)
         if not rt:
             raise KeyError("bot inexistente")
@@ -162,9 +169,10 @@ class Orchestrator:
             rt.state = "STOPPED"
             return 0
         if rt.builder.closed:
-            return len(rt.builder.closed)  # ya sembrado: no duplicar
+            return len(rt.builder.closed)
+        prov = self._provider_for_bot(rt.bot)
         try:
-            cs = await self.provider.history(rt.bot.symbol, rt.bot.timeframe, 400)
+            cs = await prov.history(rt.bot.symbol, rt.bot.timeframe, 400)
             rt.builder.seed(cs)
             rt.state = "WAITING_FOR_MARKET_DATA"
             log.info("seed %s %s: %d velas (bot %s en espera de mercado)",
@@ -172,54 +180,23 @@ class Orchestrator:
             return len(cs)
         except Exception as e:
             msg = str(e)[:120]
-            if "OHLC" in msg or "pool" in msg.lower():
-                # Sin histórico disponible: se acumula desde polls en vivo.
-                rt.state = "WAITING_FOR_MARKET_DATA"
-                log.info("seed %s %s: sin histórico (%s); acumula desde polls",
-                         rt.bot.symbol, rt.bot.timeframe, msg)
-                return 0
-            rt.state = "ERROR"
-            log.warning("seed %s %s fallo: %s", rt.bot.symbol, rt.bot.timeframe, msg)
+            rt.state = "WAITING_FOR_MARKET_DATA"
+            log.info("seed %s %s: sin historico (%s); acumula desde polls",
+                     rt.bot.symbol, rt.bot.timeframe, msg)
             return 0
 
-    def _status(self, info):
-        was = self.conn.get("connected")
-        self.conn.update({k: v for k, v in info.items() if k in ("connected", "mode", "error")})
+    # ---- provider status ----
+    def _status(self, provider_name, info):
+        was = self.conn.get(provider_name, {}).get("connected")
+        if provider_name not in self.conn:
+            self.conn[provider_name] = {"connected": False, "mode": "unknown",
+                                         "provider": provider_name}
+        self.conn[provider_name].update(
+            {k: v for k, v in info.items() if k in ("connected", "mode", "error")})
         self._push("status", {"conn": self.conn})
-        if info.get("connected") and not was:
-            # Solo al (re)conectar de verdad: evita resyncs en cada poll con error.
-            for rt in self.bots.values():
-                if rt.bot.status == "running" and rt.state == "RECONNECTING":
-                    rt.state = "WAITING_FOR_MARKET_DATA"
-            asyncio.create_task(self._resync())
-        elif "connected" in info and not info.get("connected"):
-            # Solo desconexión real; los avisos de modo (poll/stream) no cambian estado.
-            for rt in self.bots.values():
-                if rt.state in ("RUNNING", "WAITING_FOR_MARKET_DATA"):
-                    rt.state = "RECONNECTING"
-                    log.info("bot %s %s: RECONNECTING", rt.bot.bot_id, rt.bot.timeframe)
 
     async def _resync(self):
-        """Tras reconectar: solo historial (continuidad). Nunca genera señal."""
-        for bid, rt in self.bots.items():
-            if rt.bot.status != "running":
-                continue
-            try:
-                cs = await self.provider.history(rt.bot.symbol, rt.bot.timeframe, 10)
-                b = rt.builder
-                last = b.closed[-1].open_epoch if b.closed else 0
-                existing = {c.open_epoch for c in b.closed}
-                new = [c for c in cs if c["epoch"] > last and c["epoch"] not in existing]
-                for c in new:
-                    b.closed.append(Candle(rt.bot.symbol, rt.bot.timeframe, c["epoch"],
-                                           c["open"], c["high"], c["low"], c["close"],
-                                           c.get("volume", 0.0), True))
-                    self.db.mark_processed(f"{rt.bot.symbol}|{rt.bot.timeframe}|{c['epoch']}")
-                if new:
-                    log.info("resync %s %s: %d velas (solo historial)", rt.bot.symbol, rt.bot.timeframe, len(new))
-            except Exception as e:
-                msg = str(e)[:120] or type(e).__name__
-                log.warning("resync %s %s fallo: %s", rt.bot.symbol, rt.bot.timeframe, msg)
+        pass
 
     # ---- flujo principal ----
     def _tick(self, symbol, price, epoch):
@@ -251,9 +228,8 @@ class Orchestrator:
 
     def _on_closed_candle(self, rt: BotRuntime, candle):
         if self.db.is_processed(candle.uid):
-            return  # una vela jamás se procesa dos veces
+            return
         closes = rt.builder.closes()
-        # salidas: cada posición abierta se evalúa (independientes)
         for ref in list(rt.broker.positions):
             p = rt.broker.positions.get(ref)
             if p and rt.strategy.exit(closes, p.side):
@@ -261,21 +237,20 @@ class Orchestrator:
                 log.info("%s %s %s EXIT %s @ %.5f", rt.bot.bot_id, rt.bot.symbol,
                          rt.bot.timeframe, p.side, candle.close)
                 rt.broker.close_position(p.id, candle.close, f"{rt.strategy_name} exit")
-        # entrada: como máximo una por vela cerrada y si hay cupo
         direction = rt.strategy.entry(closes)
         if direction:
             if rt.can_open():
                 self._signal(rt, candle, direction, f"cruce {rt.strategy_name}")
-                log.info("%s %s %s SEÑAL %s @ %.5f", rt.bot.bot_id, rt.bot.symbol,
+                log.info("%s %s %s SENAL %s @ %.5f", rt.bot.bot_id, rt.bot.symbol,
                          rt.bot.timeframe, direction, candle.close)
                 rt.broker.place_order(rt.bot.symbol, direction, rt.bot.lot,
                                       candle.close, rt.open_ref(),
                                       bot_id=rt.bot.bot_id, extra=rt.snapshot_extra())
             else:
-                log.info("vela %s %s: señal %s omitida (max_positions=%d)",
+                log.info("vela %s %s: senal %s omitida (max_positions=%d)",
                          rt.bot.symbol, rt.bot.timeframe, direction, rt.bot.max_positions)
         else:
-            log.info("[%s] %s %s %s vela cerrada: %s sin señal (cierre=%.5f)",
+            log.info("[%s] %s %s %s vela cerrada: %s sin senal (cierre=%.5f)",
                      candle.open_epoch, rt.bot.bot_id, rt.bot.symbol,
                      rt.bot.timeframe, rt.strategy_name, candle.close)
         self.db.mark_processed(candle.uid)
@@ -298,7 +273,7 @@ class Orchestrator:
         except Exception:
             pass
 
-    # ---- stats por bot ----
+    # ---- stats ----
     def bot_stats(self, bot_id):
         rt = self.bots.get(bot_id)
         if not rt:
@@ -313,20 +288,27 @@ class Orchestrator:
         return compute_stats(rt.bot.capital, closed, opens, None)
 
     async def run_client(self):
-        # Vía autenticada Deriv (PENDIENTE_DE_CONFIRMAR): requiere App ID
-        # registrado + token clásico. Otros proveedores la omiten.
-        otp_url = None
-        c = getattr(self.provider, "client", None)
-        if (self.provider.name == "deriv" and c is not None
-                and getattr(c, "token", "")
-                and getattr(c, "app_id", "") not in ("", "1089", "1")):
-            try:
-                loop = asyncio.get_running_loop()
-                otp_url, aid = await loop.run_in_executor(None, c.otp_connect_url)
-                log.info("OTP OK cuenta %s", aid)
-            except Exception as e:
-                log.warning("OTP fallo (%s); modo clásico", str(e)[:150])
-        if self.provider.name == "deriv":
-            await self.provider.run(self.s.symbols, otp_url)
+        providers_seen = set()
+        for rt in self.bots.values():
+            pname = rt.bot.provider
+            if pname not in providers_seen:
+                providers_seen.add(pname)
+                prov = self._get_provider(pname)
+                syms = [r.bot.symbol for r in self.bots.values()
+                        if r.bot.provider == pname and r.bot.status == "running"]
+                if syms:
+                    self._provider_tasks.append(
+                        asyncio.create_task(self._run_one_provider(prov, syms, pname)))
+        if self._provider_tasks:
+            await asyncio.gather(*self._provider_tasks, return_exceptions=True)
         else:
-            await self.provider.run(self.s.symbols)
+            log.info("sin bots activos, provider no arranca")
+
+    async def _run_one_provider(self, prov, syms, pname):
+        try:
+            log.info("arrancando provider %s para %d bots: %s", pname, len(syms), syms)
+            await prov.run(syms)
+        except asyncio.CancelledError:
+            log.info("provider %s cancelado", pname)
+        except Exception as e:
+            log.warning("provider %s fallo: %s", pname, str(e)[:200])

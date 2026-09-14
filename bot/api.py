@@ -284,7 +284,7 @@ def create_app(orch, app=None):
 
     @app.get("/api/admin/status")
     def admin_status(admin: bool = Depends(require_admin)):
-        return {"conn": orch.conn, "provider": orch.provider.name,
+        return {"conn": orch.conn, "providers": list(orch._providers.keys()),
                 "bots": len(orch.bots)}
 
     @app.websocket("/ws/ui")

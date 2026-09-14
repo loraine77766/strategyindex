@@ -109,17 +109,46 @@ StrategyIndex</div>
 <h3 style="margin:0 0 12px">Crear Bot</h3>
 <div class="field"><label>Estrategia</label>
 <select name="strategy_key" id="fStrategy"><option value="irk">Index Range Killer (EMA 75/150)</option><option value="irk_plus">Index Range Killer + (EMA 30/75/150)</option></select></div>
-<div class="field"><label>Proveedor de datos</label>
-<select id="fProvider"><option value="coinmarketcap">CoinMarketCap (Criptomonedas)</option><option value="deriv">Deriv (Oro, NASDAQ, Indices)</option></select></div>
+<div class="field"><label>Proveedor</label>
+<select id="fProvider"><option value="coinmarketcap">CoinMarketCap (Criptomonedas)</option><option value="yahoo">Yahoo Finance (Acciones, Forex, Commodities)</option></select></div>
 <div id="cmcFields">
 <div class="field"><label>Buscar cripto en CMC</label>
 <div style="display:flex;gap:6px"><input id="fAssetSearch" placeholder="BTC, Ethereum, SOL, Doge..." autocomplete="off"><button class="btn sm" id="fAssetBtn" type="button">Buscar</button></div>
 <div id="fAssetResults" style="margin-top:6px"></div>
 <input type="hidden" name="symbol" id="fSymbol"></div>
 </div>
-<div id="derivFields" class="hidden">
-<div class="field"><label>Activo Deriv (sintetico)</label>
-<select id="fDerivSymbol"><option value="frxXAUUSD">Oro (XAU/USD)</option><option value="OTC_NDX">NASDAQ 100 (NDX)</option><option value="R_100">Step Index (R_100)</option><option value="R_75">Boom/Crash 75</option><option value="R_100">Boom/Crash 100</option><option value="frxXAGUSD">Plata (XAG/USD)</option><option value="frxEURUSD">EUR/USD</option><option value="frxGBPUSD">GBP/USD</option></select></div>
+<div id="yahooFields" class="hidden">
+<div class="field"><label>Activo</label>
+<select id="fYahooSymbol">
+<optgroup label="Acciones">
+<option value="TSLA">Tesla (TSLA)</option>
+<option value="AAPL">Apple (AAPL)</option>
+<option value="NVDA">NVIDIA (NVDA)</option>
+<option value="AMZN">Amazon (AMZN)</option>
+<option value="GOOG">Google (GOOG)</option>
+<option value="MSFT">Microsoft (MSFT)</option>
+<option value="META">Meta (META)</option>
+</optgroup>
+<optgroup label="Indices">
+<option value="NDX">NASDAQ 100 (^NDX)</option>
+<option value="SPX">S&P 500 (^GSPC)</option>
+<option value="DJI">Dow Jones (^DJI)</option>
+</optgroup>
+<optgroup label="Commodities">
+<option value="GOLD">Oro (GC=F)</option>
+<option value="SILVER">Plata (SI=F)</option>
+<option value="OIL">Petróleo (CL=F)</option>
+</optgroup>
+<optgroup label="Forex">
+<option value="EURUSD">EUR/USD</option>
+<option value="GBPUSD">GBP/USD</option>
+<option value="USDJPY">USD/JPY</option>
+</optgroup>
+<optgroup label="Cripto (Yahoo)">
+<option value="BTC">Bitcoin (BTC-USD)</option>
+<option value="ETH">Ethereum (ETH-USD)</option>
+</optgroup>
+</select></div>
 </div>
 <div class="field"><label>Temporalidad</label>
 <select name="timeframe" id="fTimeframe"><option value="1m">1 minuto</option><option value="5m" selected>5 minutos</option><option value="15m">15 minutos</option><option value="30m">30 minutos</option><option value="1h">1 hora</option><option value="4h">4 horas</option></select></div>
@@ -315,14 +344,14 @@ function searchAssets(){
 
 function switchProvider(){
   var p=$("fProvider").value;
-  if(p==="deriv"){
+  if(p==="yahoo"){
     $("cmcFields").className="hidden";
-    $("derivFields").className="";
-    _selectedAsset=$("fDerivSymbol").value;
+    $("yahooFields").className="";
+    _selectedAsset=$("fYahooSymbol").value;
     $("createBotBtn").disabled=false;
   }else{
     $("cmcFields").className="";
-    $("derivFields").className="hidden";
+    $("yahooFields").className="hidden";
     _selectedAsset=null;$("fSymbol").value="";$("fAssetSearch").value="";$("fAssetResults").innerHTML="";
     $("createBotBtn").disabled=true;
   }
@@ -330,7 +359,7 @@ function switchProvider(){
 
 async function createBot(){
   var provider=$("fProvider").value;
-  var symbol=provider==="deriv"?$("fDerivSymbol").value:_selectedAsset;
+  var symbol=provider==="yahoo"?$("fYahooSymbol").value:_selectedAsset;
   if(!symbol){$("admMsg").textContent="Selecciona un activo primero.";$("admMsg").className="dn";return;}
   var f={strategy_key:$("fStrategy").value,symbol:symbol,provider:provider,timeframe:$("fTimeframe").value,capital:parseFloat(document.querySelector('[name=capital]').value)||50,lot:parseFloat(document.querySelector('[name=lot]').value)||0.01,max_positions:parseInt(document.querySelector('[name=max_positions]').value)||1};
   $("createBotBtn").disabled=true;
@@ -376,7 +405,7 @@ function init(){
   $("tabNew").addEventListener("click",function(){$("tabNew").className="sel";$("tabBots").className="";$("admNew").className="";$("admBots").className="hidden";});
   $("createBotBtn").addEventListener("click",function(e){e.preventDefault();createBot();});
   $("fProvider").addEventListener("change",switchProvider);
-  $("fDerivSymbol").addEventListener("change",function(){_selectedAsset=this.value;$("createBotBtn").disabled=false;});
+  $("fYahooSymbol").addEventListener("change",function(){_selectedAsset=this.value;$("createBotBtn").disabled=false;});
   $("fAssetBtn").addEventListener("click",function(){searchAssets();});
   $("fAssetSearch").addEventListener("keydown",function(e){if(e.key==="Enter"){e.preventDefault();searchAssets();}});
 
