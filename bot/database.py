@@ -8,12 +8,12 @@ import time
 
 class Store:
     def __init__(self, path=None, database_url=None):
-        url = database_url or os.environ.get("DATABASE_URL", "")
-        if url:
+        self._url = database_url or os.environ.get("DATABASE_URL", "")
+        if self._url:
             import psycopg2
             import psycopg2.extras
             self._pg = True
-            self.db = psycopg2.connect(url, sslmode="require")
+            self.db = psycopg2.connect(self._url, sslmode="require")
             self.db.autocommit = False
         else:
             import sqlite3
@@ -22,8 +22,23 @@ class Store:
             self.db.row_factory = sqlite3.Row
         self._schema()
 
+    def _ensure_conn(self):
+        if not self._pg:
+            return
+        try:
+            if self.db.closed:
+                raise Exception("closed")
+            cur = self.db.cursor()
+            cur.execute("SELECT 1")
+            cur.close()
+        except Exception:
+            import psycopg2
+            self.db = psycopg2.connect(self._url, sslmode="require")
+            self.db.autocommit = False
+
     def _execute(self, sql, params=None):
         if self._pg:
+            self._ensure_conn()
             import psycopg2.extras
             cur = self.db.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
         else:

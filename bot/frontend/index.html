@@ -65,6 +65,13 @@ canvas.chart{width:100%;height:160px;background:#080e1a;border-radius:8px;border
 .row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
 form.adm{display:grid;grid-template-columns:1fr;gap:8px;margin:10px 0}
 form.adm input,form.adm select{background:var(--card2);color:var(--txt);border:1px solid var(--line);border-radius:8px;padding:7px 10px;font-size:13px}
+.field{margin-bottom:10px}
+.field label{display:block;color:var(--mut);font-size:11px;text-transform:uppercase;letter-spacing:.4px;margin-bottom:4px;font-weight:600}
+.field input,.field select{width:100%;background:var(--card2);color:var(--txt);border:1px solid var(--line);border-radius:8px;padding:8px 10px;font-size:13px}
+.asset-item{background:var(--card2);border:1px solid var(--line);border-radius:8px;padding:8px 10px;margin-bottom:4px;cursor:pointer;display:flex;justify-content:space-between;align-items:center}
+.asset-item:hover{border-color:var(--acc)}
+.asset-item .sym{font-weight:700;color:var(--acc)}
+.asset-item .name{color:var(--mut);font-size:12px}
 </style>
 </head>
 <body>
@@ -98,15 +105,22 @@ StrategyIndex</div>
 <div id="viewAdm" class="hidden">
 <div class="tabs"><button class="sel" id="tabBots">Bots</button><button id="tabNew">Crear bot</button><button id="admLogoutBtn" class="btn sm ghost" style="margin-left:auto">Salir</button></div>
 <div id="admBots"></div>
-<div id="admNew" class="hidden"><section class="panel"><b>Crear bot</b>
-<form class="adm" id="frmBot">
-<select name="strategy_key"><option value="irk">Index Range Killer (EMA75/150)</option><option value="irk_plus">Index Range Killer + (EMA30/75/150)</option></select>
-<input name="symbol" placeholder="Symbol (ej: BTC)" required>
-<input name="timeframe" placeholder="TF (ej: 1h)" required>
-<input name="capital" type="number" value="50" step="1" placeholder="Capital">
-<input name="lot" type="number" value="0.01" step="0.001" placeholder="Lote">
-<input name="max_positions" type="number" value="1" min="1" placeholder="Max pos">
-</form><button id="createBotBtn" class="btn">Crear</button><div id="admMsg" class="k" style="margin-top:6px"></div></section></div>
+<div id="admNew" class="hidden"><section class="panel">
+<h3 style="margin:0 0 12px">Crear Bot</h3>
+<div class="field"><label>Estrategia</label>
+<select name="strategy_key" id="fStrategy"><option value="irk">Index Range Killer (EMA 75/150)</option><option value="irk_plus">Index Range Killer + (EMA 30/75/150)</option></select></div>
+<div class="field"><label>Activo (CMC)</label>
+<div style="display:flex;gap:6px"><input id="fAssetSearch" placeholder="Buscar: BTC, Ethereum, SOL..." autocomplete="off"><button class="btn sm" id="fAssetBtn" type="button">Buscar</button></div>
+<div id="fAssetResults" style="margin-top:6px"></div>
+<input type="hidden" name="symbol" id="fSymbol"></div>
+<div class="field"><label>Temporalidad</label>
+<select name="timeframe" id="fTimeframe"><option value="1m">1 minuto</option><option value="5m" selected>5 minutos</option><option value="15m">15 minutos</option><option value="30m">30 minutos</option><option value="1h">1 hora</option><option value="4h">4 horas</option></select></div>
+<div class="field"><label>Capital inicial ($)</label><input name="capital" type="number" value="50" step="10" min="10"></div>
+<div class="field"><label>Tamano de lote</label><input name="lot" type="number" value="0.01" step="0.01" min="0.001"></div>
+<div class="field"><label>Maximo posiciones abiertas</label><input name="max_positions" type="number" value="1" min="1" max="10"></div>
+<div style="margin-top:14px"><button id="createBotBtn" class="btn" disabled>Crear Bot</button></div>
+<div id="admMsg" class="k" style="margin-top:8px"></div>
+</section></div>
 </div>
 
 </main>
@@ -259,12 +273,43 @@ async function admLoad(){
 
 function admToggle(id,st){apiPost("/api/admin/bots/"+id,{status:st==="running"?"stopped":"running"},"PATCH").then(function(){admLoad();});}
 function admDelete(id){if(!confirm("Borrar este bot?"))return;apiPost("/api/admin/bots/"+id,{},"DELETE").then(function(){admLoad();});}
+
+var _selectedAsset=null;
+function searchAssets(){
+  var q=$("fAssetSearch").value.trim();
+  if(q.length<2){$("fAssetResults").innerHTML="";return;}
+  $("fAssetResults").innerHTML='<div class="k">Buscando...</div>';
+  apiGet("/api/admin/market/assets?q="+encodeURIComponent(q)+"&limit=8").then(function(r){
+    if(!r.length){$("fAssetResults").innerHTML='<div class="k">Sin resultados para "'+q+'"</div>';return;}
+    var html='';
+    for(var i=0;i<r.length;i++){
+      var a=r[i];
+      html+='<div class="asset-item" data-sym="'+a.symbol+'" data-id="'+a.cmc_id+'">';
+      html+='<span><span class="sym">'+a.symbol+'</span> <span class="name">'+a.name+'</span></span>';
+      html+='<span class="k">#'+a.rank+(a.price?' · $'+parseFloat(a.price).toFixed(2):'')+'</span></div>';
+    }
+    $("fAssetResults").innerHTML=html;
+    var items=document.querySelectorAll(".asset-item");
+    for(var j=0;j<items.length;j++){
+      items[j].addEventListener("click",function(){
+        var sym=this.getAttribute("data-sym");
+        _selectedAsset=sym;
+        $("fSymbol").value=sym;
+        $("fAssetSearch").value=sym+" (seleccionado)";
+        $("fAssetResults").innerHTML='<div class="k" style="color:var(--up)">✓ '+sym+' seleccionado</div>';
+        $("createBotBtn").disabled=false;
+      });
+    }
+  }).catch(function(){$("fAssetResults").innerHTML='<div class="k">Error de conexion</div>';});
+}
+
 async function createBot(){
-  var f={};
-  var fd=new FormData($("frmBot"));
-  fd.forEach(function(v,k){f[k]=v;});
-  try{await apiPost("/api/admin/bots",f);$("admMsg").textContent="Bot creado.";$("admMsg").className="up";admLoad();}
-  catch(e){$("admMsg").textContent="Error: revisa campos.";$("admMsg").className="dn";}
+  if(!_selectedAsset){$("admMsg").textContent="Selecciona un activo primero.";$("admMsg").className="dn";return;}
+  var f={strategy_key:$("fStrategy").value,symbol:_selectedAsset,provider:"coinmarketcap",timeframe:$("fTimeframe").value,capital:parseFloat($("frmBot").capital.value)||50,lot:parseFloat($("frmBot").lot.value)||0.01,max_positions:parseInt($("frmBot").max_positions.value)||1};
+  $("createBotBtn").disabled=true;
+  $("admMsg").textContent="Creando...";$("admMsg").className="k";
+  try{await apiPost("/api/admin/bots",f);$("admMsg").textContent="Bot creado.";$("admMsg").className="up";admLoad();_selectedAsset=null;$("fSymbol").value="";$("fAssetSearch").value="";$("createBotBtn").disabled=true;}
+  catch(e){$("admMsg").textContent="Error: "+(e.message||"revisa campos");$("admMsg").className="dn";$("createBotBtn").disabled=false;}
 }
 
 function init(){
@@ -291,6 +336,8 @@ function init(){
   $("tabBots").addEventListener("click",function(){$("tabBots").className="sel";$("tabNew").className="";$("admBots").className="";$("admNew").className="hidden";});
   $("tabNew").addEventListener("click",function(){$("tabNew").className="sel";$("tabBots").className="";$("admNew").className="";$("admBots").className="hidden";});
   $("createBotBtn").addEventListener("click",function(e){e.preventDefault();createBot();});
+  $("fAssetBtn").addEventListener("click",function(){searchAssets();});
+  $("fAssetSearch").addEventListener("keydown",function(e){if(e.key==="Enter"){e.preventDefault();searchAssets();}});
 
   showView("pub");
   loadBots();
